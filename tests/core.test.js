@@ -1,0 +1,7 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {correct,parseLines,updateProgress,isDifficult,initialState,mergeStates} from '../src/core.js';
+test('парсер артиклів, перекладів і кількох рядків',()=>{assert.deepEqual(parseLines('der Bus — автобус\nmitkommen;йти разом\nзайвий рядок'),[{de:'Bus',article:'der',uk:'автобус'},{de:'mitkommen',article:'',uk:'йти разом'}])});
+test('перевірка відповідей з умлаутами і альтернативами',()=>{assert.equal(correct(' автобус ',{uk:'автобус'},'de'),true);assert.equal(correct('schon',{de:'schön'},'write'),false);assert.equal(correct('Привітний',{uk:'дружній; привітний'},'de'),true);assert.equal(correct('das',{article:'der'},'article'),false)});
+test('помилка, опанування та відкладене повторення',()=>{let p=updateProgress({},false,1000);assert.ok(isDifficult(p,1000));for(let i=0;i<3;i++)p=updateProgress(p,true,2000);assert.ok(p.mastered);assert.equal(isDifficult(p,2000),false);assert.equal(isDifficult(p,p.due),true);p=updateProgress(p,false,3000);assert.equal(p.mastered,false);assert.equal(p.streak,0)});
+test('об’єднання різних пристроїв зберігає уроки й новіший прогрес',()=>{const a=initialState(),b=initialState();a.progress.x={updated:5,streak:1};b.progress.x={updated:6,streak:2};b.lessons.push({id:'other',name:'Інший',updated:10});const m=mergeStates(a,b);assert.equal(m.lessons.length,2);assert.equal(m.words.length,12);assert.equal(m.progress.x.streak,2)})
