@@ -67,9 +67,18 @@ const secondVerbBatch=[
 ["vergessen","забувати","vergisst","hat vergessen","Akkusativ"],
 ["verstehen","розуміти","versteht","hat verstanden","Akkusativ"]
 ];
+const thirdVerbBatch=[["abfahren","від'їжджати","fährt ab","ist abgefahren"],["abnehmen","знімати; худнути","nimmt ab","hat abgenommen"],["abschließen","замикати; завершувати","schließt ab","hat abgeschlossen"],["abwaschen","мити посуд; змивати","wäscht ab","hat abgewaschen"],["ankommen","прибувати","kommt an","ist angekommen"],["anziehen","одягати","zieht an","hat angezogen"],["aufnehmen","записувати; приймати","nimmt auf","hat aufgenommen"],["aufschreiben","записувати","schreibt auf","hat aufgeschrieben"],["aufstehen","вставати","steht auf","ist aufgestanden"],["ausgeben","витрачати; видавати","gibt aus","hat ausgegeben"],["aussehen","виглядати","sieht aus","hat ausgesehen"],["aussteigen","виходити з транспорту","steigt aus","ist ausgestiegen"],["austragen","розносити; виносити","trägt aus","hat ausgetragen"],["backen","пекти","backt","hat gebacken"],["beginnen","починати","beginnt","hat begonnen"],["bekommen","отримувати","bekommt","hat bekommen"],["beraten","консультувати","berät","hat beraten"],["besprechen","обговорювати","bespricht","hat besprochen"],["bestehen","складати іспит; існувати","besteht","hat bestanden"],["bleiben","залишатися","bleibt","ist geblieben"],["braten","смажити","brät","hat gebraten"],["bringen","приносити","bringt","hat gebracht"],["denken","думати","denkt","hat gedacht"],["durchstreichen","закреслювати","streicht durch","hat durchgestrichen"],["einsteigen","заходити в транспорт","steigt ein","ist eingestiegen"],["einziehen","вселятися","zieht ein","ist eingezogen"],["erfinden","винаходити","erfindet","hat erfunden"],["essen","їсти","isst","hat gegessen"],["fahren","їхати","fährt","ist gefahren"],["fernsehen","дивитися телевізор","sieht fern","hat ferngesehen"]];
 function ensureVerbs(){
   if(!Array.isArray(state.verbs))state.verbs=[];
   if(!state.verbProgress||typeof state.verbProgress!=='object')state.verbProgress={};
+  if(localStorage.getItem("deutsch-verbs-batch-3")!=="done"){
+    for(const [infinitive,uk,present,perfekt] of thirdVerbBatch){
+      const exists=state.verbs.some(v=>v.infinitive?.trim().toLocaleLowerCase("de")===infinitive&&((v.level||"A1")==="A1"));
+      if(exists)continue;
+      state.verbs.push({id:"textbook-irregular-"+infinitive,level:"A1",infinitive,uk,present,perfekt,gramCase:"",updated:Date.now()});
+    }
+    try{localStorage.setItem("deutsch-state",JSON.stringify(state));localStorage.setItem("deutsch-verbs-batch-3","done")}catch{}
+  }
   if(localStorage.getItem("deutsch-verbs-batch-2")!=="done"){
     for(const [infinitive,uk,present,perfekt,gramCase] of secondVerbBatch){
       const existing=state.verbs.find(v=>v.infinitive?.trim().toLocaleLowerCase("de")===infinitive&&((v.level||"A1")==="A1"));
