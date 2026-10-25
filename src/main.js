@@ -25,9 +25,37 @@ function answer(value){if(!session||session.result)return;const {w,mode}=task(),
 function tick(){if(!session)return;const el=$('#clock');if(session.deadline){const left=Math.max(0,Math.ceil((session.deadline-Date.now())/1000));if(el)el.textContent=`◷ ${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`;if(!left)finish()}else if(el)el.textContent='У своєму темпі'}setInterval(tick,1000);
 function finish(){const s=session;if(!s)return;session=null;shell(`<div class="game"><span class="celebrate">✦</span><p class="eyebrow">ЩЕ ОДИН КРОК УПЕРЕД</p><h1>Гарна робота!</h1><p>Відповідей: ${s.answered} · Правильних: ${s.score/10}</p><h2>${s.score} балів</h2><p class="muted">Результати збережені. Складні слова чекатимуть на повторення.</p><button class="primary" id="back">До моїх уроків →</button></div>`);$('#back').onclick=()=>{page='home';render()}}
 
+// Carefully transcribed from the user's A1 verb tables (textbook p. 347).
+// Columns: infinitive, Ukrainian meaning, er/sie/es Präsens, Perfekt, case.
+const initialVerbBatch=[
+  ["antworten","відповідати","antwortet","hat geantwortet","Dativ"],
+  ["helfen","допомагати","hilft","hat geholfen","Dativ"],
+  ["gefallen","подобатися","gefällt","hat gefallen","Dativ"],
+  ["gehören","належати","gehört","hat gehört","Dativ"],
+  ["gratulieren","вітати","gratuliert","hat gratuliert","Dativ"],
+  ["leidtun","бути шкода","tut leid","hat leidgetan","Dativ"],
+  ["schmecken","смакувати","schmeckt","hat geschmeckt","Dativ"],
+  ["anbieten","пропонувати","bietet an","hat angeboten","Dativ + Akkusativ"],
+  ["bestellen","замовляти","bestellt","hat bestellt","Dativ + Akkusativ"],
+  ["bieten","пропонувати","bietet","hat geboten","Dativ + Akkusativ"],
+  ["geben","давати","gibt","hat gegeben","Dativ + Akkusativ"],
+  ["mitbringen","приносити із собою","bringt mit","hat mitgebracht","Dativ + Akkusativ"],
+  ["mitgeben","давати із собою","gibt mit","hat mitgegeben","Dativ + Akkusativ"],
+  ["schenken","дарувати","schenkt","hat geschenkt","Dativ + Akkusativ"],
+  ["schicken","надсилати","schickt","hat geschickt","Dativ + Akkusativ"],
+  ["wünschen","бажати","wünscht","hat gewünscht","Dativ + Akkusativ"]
+];
 function ensureVerbs(){
   if(!Array.isArray(state.verbs))state.verbs=[];
   if(!state.verbProgress||typeof state.verbProgress!=='object')state.verbProgress={};
+  if(localStorage.getItem("deutsch-verbs-batch-1")!=="done"){
+    for(const [infinitive,uk,present,perfekt,gramCase] of initialVerbBatch){
+      const existing=state.verbs.find(v=>v.infinitive?.trim().toLocaleLowerCase("de")===infinitive&&((v.level||"A1")==="A1"));
+      if(existing){if(!existing.gramCase)existing.gramCase=gramCase;continue;}
+      state.verbs.push({id:"textbook-a1-"+infinitive,level:"A1",infinitive,uk,present,perfekt,gramCase,updated:Date.now()});
+    }
+    try{localStorage.setItem("deutsch-state",JSON.stringify(state));localStorage.setItem("deutsch-verbs-batch-1","done")}catch{}
+  }
 }
 
 let verbMode='translate',verbLevel='A1',verbCard=null,verbRevealed=false,verbDraft='',verbGuess='',verbNotice='',verbChecked=null;
@@ -78,7 +106,7 @@ function renderVerbs(){
     ${[["translate","Переклад"],["present","Präsens"],["perfekt","Perfekt"]].map(([key,label])=>`<button type="button" class="${key===verbMode?"primary":"secondary"}" data-verb-mode="${key}">${label}</button>`).join("")}
   </div>
   ${v?`<div class="game" style="margin-top:16px">
-    <span class="pill">${modeLabel}</span><h2>${esc(challenge)}</h2>
+    <span class="pill">${modeLabel}</span>${v.gramCase?` <span class="pill">${esc(v.gramCase)}</span>`:""}<h2>${esc(challenge)}</h2>
     <p class="muted">${verbMode==="translate"?"Згадай початкову форму німецькою.":verbMode==="present"?"Згадай форму для er/sie/es.":"Згадай форму Perfekt з haben або sein."}</p>
     ${verbRevealed?`<div class="feedback ${verbChecked?"success":"wrong"}"><p>${verbChecked?"Правильно!":"Помилка. Правильна відповідь:"}</p><strong>${esc(result)}</strong><p>${esc(v.uk)}</p>${verbGuess?`<p>Твоя спроба: ${esc(verbGuess)}</p>`:""}</div>
       <div class="actions"><button id="verb-next" class="primary">Наступне дієслово →</button></div>`:
