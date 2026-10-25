@@ -161,6 +161,13 @@ function renderVerbs(){
       verb.present=known.present;verb.perfekt=known.perfekt;repaired=true;
     }
   }
+  // Some verbs have two accepted standard forms. Keep the displayed answer concise.
+  const variants={
+    backen:{present:["backt","bäckt"]},
+    sitzen:{perfekt:["hat gesessen","ist gesessen"]},
+    stehen:{perfekt:["hat gestanden","ist gestanden"]},
+    liegen:{perfekt:["hat gelegen","ist gelegen"]}
+  };
   if(repaired)try{localStorage.setItem("deutsch-state",JSON.stringify(state))}catch{}
   const result=v?(verbMode==="translate"?v.infinitive:verbMode==="present"?v.present:v.perfekt):"";
   const lvl=verbLevel;
@@ -199,7 +206,8 @@ function renderVerbs(){
         const norm=x=>x.trim().toLocaleLowerCase("de").replace(/\\s+/g," ");
         const target=verbMode==="translate"?v.infinitive:verbMode==="present"?v.present:v.perfekt;
         const attempt=verbMode==="present"?verbGuess.replace(/^(er|sie|es)\\s+/i,""):verbGuess;
-        verbChecked=norm(attempt)===norm(target);
+        const alternatives=variants[v.infinitive?.trim().toLocaleLowerCase("de")]?.[verbMode]||[];
+        verbChecked=[target,...alternatives].some(answer=>norm(attempt)===norm(answer));
         state.verbProgress[v.id+":"+verbMode]=updateProgress(state.verbProgress[v.id+":"+verbMode],verbChecked);
         save();verbRevealed=true;renderVerbs();
       };
