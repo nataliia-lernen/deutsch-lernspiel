@@ -182,7 +182,12 @@ function renderVerbs(){
     backen:{present:["backt","bäckt"]},
     sitzen:{perfekt:["hat gesessen","ist gesessen"]},
     stehen:{perfekt:["hat gestanden","ist gestanden"]},
-    liegen:{perfekt:["hat gelegen","ist gelegen"]}
+    liegen:{perfekt:["hat gelegen","ist gelegen"]},
+    fahren:{perfekt:["ist gefahren","hat gefahren"]},
+    fliegen:{perfekt:["ist geflogen","hat geflogen"]},
+    reiten:{perfekt:["ist geritten","hat geritten"]},
+    schwimmen:{perfekt:["ist geschwommen","hat geschwommen"]},
+    ziehen:{perfekt:["hat gezogen","ist gezogen"]}
   };
   if(repaired)try{localStorage.setItem("deutsch-state",JSON.stringify(state))}catch{}
   const result=v?(verbMode==="translate"?v.infinitive:verbMode==="present"?v.present:v.perfekt):"";
@@ -197,7 +202,7 @@ function renderVerbs(){
   </div>
   ${v?`<div class="game" style="margin-top:16px">
     <span class="pill">${modeLabel}</span>${v.gramCase?` <span class="pill">${esc(v.gramCase)}</span>`:""}<h2>${esc(challenge)}</h2>
-    <p class="muted">${verbMode==="translate"?"Згадай початкову форму німецькою.":verbMode==="present"?"Згадай форму для er/sie/es.":"Згадай форму Perfekt з haben або sein."}</p>
+    <p class="muted">${verbMode==="translate"?"Згадай початкову форму німецькою.":verbMode==="present"?"Згадай форму для er/sie/es.":"Згадай форму Perfekt для er/sie/es (hat або ist). У деяких дієслів є два правильні варіанти залежно від значення."}</p>
     ${verbRevealed?`<div class="feedback ${verbChecked?"success":"wrong"}"><p>${verbChecked?"Правильно!":"Помилка. Правильна відповідь:"}</p><strong>${esc(result)}</strong><p>${esc(v.uk)}</p>${verbGuess?`<p>Твоя спроба: ${esc(verbGuess)}</p>`:""}</div>
       <div class="actions"><button id="verb-next" class="primary">Наступне дієслово →</button></div>`:
       `<label for="verb-guess">Напиши відповідь</label><input id="verb-guess" value="${esc(verbGuess)}" autocomplete="off" placeholder="Введи відповідь" required>
