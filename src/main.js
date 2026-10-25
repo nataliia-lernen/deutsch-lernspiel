@@ -12,8 +12,8 @@ let page='home', selected=new Set(state.lessons.map(l=>l.id)), draft=[],session=
 let config;try{config=JSON.parse(localStorage.getItem('deutsch-cloud'))}catch{}
 let notice='', storageError='';
 function save(){try{localStorage.setItem('deutsch-state',JSON.stringify(state));storageError=''}catch{storageError='Пам’ять браузера заповнена. Експортуйте резервну копію.'}sync()}
-function shell(content){$('#app').innerHTML=`<header><a class="brand" href="#" data-page="home"><span class="logo">D<span>✦</span></span><div>Deutsch<span>Lernspiel</span></div></a><span class="tag">НІМЕЦЬКА · A1–A2</span><button class="cloud" data-page="settings">☁ <span>${cloud?'Синхронізація':'На цьому пристрої'}</span></button></header><div class="layout"><aside><p class="eyebrow">ВАШ ПРОСТІР</p><nav>${[['home','▦','Мої уроки'],['hard','◇','Складні слова'],['add','＋','Додати урок'],['settings','⚙','Налаштування']].map(([p,icon,t])=>`<button data-page="${p}" class="${page===p?'active':''}"><span>${icon}</span>${t}${p==='hard'?`<small>${state.words.filter(w=>isDifficult(state.progress[w.id])).length}</small>`:''}</button>`).join('')}</nav><div class="aside-note"><span>☀</span><strong>Трохи щодня —<br>і слів стає більше.</strong><p>Навіть 10 хвилин мають значення.</p></div></aside><main>${storageError?`<p class="error">${storageError}</p>`:''}${content}</main></div><footer>Deutsch Lernspiel <span>Ваш маленький крок до вільної німецької.</span></footer>`;document.querySelectorAll('[data-page]').forEach(b=>b.onclick=e=>{e.preventDefault();if(session&&!confirm('Завершити тренування? Відповіді вже збережено.'))return;session=null;page=b.dataset.page;render()})}
-function render(){if(session)return renderGame();if(page==='add')return renderAdd();if(page==='settings')return renderSettings();const hard=page==='hard', words=state.words.filter(w=>!hard||isDifficult(state.progress[w.id]));const learned=state.words.filter(w=>state.progress[w.id]?.mastered).length;
+function shell(content){$('#app').innerHTML=`<header><a class="brand" href="#" data-page="home"><span class="logo">D<span>✦</span></span><div>Deutsch<span>Lernspiel</span></div></a><span class="tag">НІМЕЦЬКА · A1–A2</span><button class="cloud" data-page="settings">☁ <span>${cloud?'Синхронізація':'На цьому пристрої'}</span></button></header><div class="layout"><aside><p class="eyebrow">ВАШ ПРОСТІР</p><nav>${[['home','▦','Мої уроки'],['hard','◇','Складні слова'],['verbs','◉','Дієслова'],['add','＋','Додати урок'],['settings','⚙','Налаштування']].map(([p,icon,t])=>`<button data-page="${p}" class="${page===p?'active':''}"><span>${icon}</span>${t}${p==='hard'?`<small>${state.words.filter(w=>isDifficult(state.progress[w.id])).length}</small>`:''}</button>`).join('')}</nav><div class="aside-note"><span>☀</span><strong>Трохи щодня —<br>і слів стає більше.</strong><p>Навіть 10 хвилин мають значення.</p></div></aside><main>${storageError?`<p class="error">${storageError}</p>`:''}${content}</main></div><footer>Deutsch Lernspiel <span>Ваш маленький крок до вільної німецької.</span></footer>`;document.querySelectorAll('[data-page]').forEach(b=>b.onclick=e=>{e.preventDefault();if(session&&!confirm('Завершити тренування? Відповіді вже збережено.'))return;session=null;page=b.dataset.page;render()})}
+function render(){if(session)return renderGame();if(page==='verbs')return renderVerbs();if(page==='add')return renderAdd();if(page==='settings')return renderSettings();const hard=page==='hard', words=state.words.filter(w=>!hard||isDifficult(state.progress[w.id]));const learned=state.words.filter(w=>state.progress[w.id]?.mastered).length;
 shell(`<div class="heading"><div><p class="eyebrow">${hard?'ПОВТОРЕННЯ — ЦЕ СИЛА':'HALLO! ПРИВІТ!'}</p><h1>${hard?'Мої складні слова':'Новий день. Нові слова.'}</h1><p class="muted">${hard?'Слова, яким варто приділити ще трохи уваги.':'Вчіть німецьку у своєму темпі. Оберіть урок — і почнімо!'}</p></div><button class="primary" data-add>＋ Додати урок</button></div><section class="hero"><div><span class="pill">✦ МАЛЕНЬКА ЗВИЧКА, ВЕЛИКИЙ РЕЗУЛЬТАТ</span><h2>Ваші 10 хвилин<br>німецької сьогодні</h2><p>Кілька слів дорогою, за кавою чи між справами.<br>Кожна відповідь — крок уперед.</p><button class="light" id="quick">Почати швидке тренування <span>↗</span></button><small>◷ 10 хвилин · усі типи завдань</small></div><div class="hero-art" aria-hidden="true"><span class="spark">✧</span><div class="word-card back">die Welt <small>світ</small></div><div class="word-card front"><span>das</span>Wort<small>слово</small><b>✓</b></div><span class="dots">✦</span></div></section><div class="stats"><div><span class="stat-icon">▤</span><p><strong>${state.lessons.length}</strong><small>уроків у бібліотеці</small></p></div><div><span class="stat-icon peach">Aa</span><p><strong>${state.words.length}</strong><small>слів для відкриття</small></p></div><div><span class="stat-icon lavender">✓</span><p><strong>${learned}</strong><small>уже вивчено</small></p></div></div><section><div class="section-title"><h2>${hard?'Час повторити':'Бібліотека уроків'}</h2><span>${hard?words.length+' слів':'Оберіть кілька, щоб змішати слова'}</span></div>${hard?`<div class="word-list">${words.length?words.map(w=>`<div><strong>${esc(w.article)} ${esc(w.de)}</strong><span>${esc(w.uk)}</span></div>`).join(''):'<p>Тут з’являться слова після помилки або кнопки «Не знаю». Вивчені слова повертаються через 1, 2, 4… днів.</p>'}</div>`:`<div class="lesson-grid">${state.lessons.map((l,i)=>{const ws=state.words.filter(w=>w.lesson===l.id),n=ws.filter(w=>state.progress[w.id]?.mastered).length;return `<label class="lesson ${selected.has(l.id)?'selected':''}"><div class="lesson-top"><span class="book">${['▤','☕','✿','⌂'][i%4]}</span><input type="checkbox" data-select="${esc(l.id)}" ${selected.has(l.id)?'checked':''} aria-label="Обрати ${esc(l.name)}"></div><span class="level">A1–A2 · УРОК ${i+1}</span><h3>${esc(l.name)}</h3><p>${ws.length} слів <span>·</span> ${n} вивчено</p><div class="bar"><i style="width:${ws.length?n/ws.length*100:0}%"></i></div></label>`}).join('')}<button class="new-lesson" data-add><span>＋</span><strong>Ваш наступний урок</strong><small>Фото або власний список слів</small></button></div>`}<div class="training"><div><label for="mode">Як тренуємось?</label><select id="mode">${Object.entries(modes).map(([v,t])=>`<option value="${v}">${t}</option>`).join('')}</select></div><div><label for="duration">Тривалість</label><select id="duration"><option value="0">Без таймера</option><option value="10">10 хвилин</option><option value="15">15 хвилин</option></select></div><button class="primary" id="start">Тренувати ${hard?'складні слова':'обрані уроки'} →</button></div><p class="hint">♡ Помилятися — нормально. Складні слова ми збережемо для повторення.</p></section>`);
 $('[data-add]').onclick=()=>{page='add';render()};document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{page='add';render()});document.querySelectorAll('[data-select]').forEach(b=>b.onchange=()=>{b.checked?selected.add(b.dataset.select):selected.delete(b.dataset.select);b.closest('.lesson').classList.toggle('selected',b.checked)});$('#start').onclick=()=>start(hard?words:state.words.filter(w=>selected.has(w.lesson)),$('#mode').value,Number($('#duration').value));$('#quick').onclick=()=>start(hard?words:state.words.filter(w=>selected.has(w.lesson)),'mix',10)}
 function start(words,mode,minutes){if(mode==='article')words=words.filter(w=>w.article);if(!words.length)return alert('Оберіть урок зі словами. Для артиклів потрібні іменники з der, die або das.');session={words:shuffle(words),mode,index:0,score:0,answered:0,deadline:minutes?Date.now()+minutes*60000:0,result:null};renderGame()}
@@ -24,6 +24,96 @@ function explanation(w){return `<div class="explanation">${w.example?`<p><b>${es
 function answer(value){if(!session||session.result)return;const {w,mode}=task(),ok=value!==null&&correct(value,w,mode);state.progress[w.id]=updateProgress(state.progress[w.id],ok);session.result={ok};session.answered++;if(ok)session.score+=10;save();renderGame()}
 function tick(){if(!session)return;const el=$('#clock');if(session.deadline){const left=Math.max(0,Math.ceil((session.deadline-Date.now())/1000));if(el)el.textContent=`◷ ${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`;if(!left)finish()}else if(el)el.textContent='У своєму темпі'}setInterval(tick,1000);
 function finish(){const s=session;if(!s)return;session=null;shell(`<div class="game"><span class="celebrate">✦</span><p class="eyebrow">ЩЕ ОДИН КРОК УПЕРЕД</p><h1>Гарна робота!</h1><p>Відповідей: ${s.answered} · Правильних: ${s.score/10}</p><h2>${s.score} балів</h2><p class="muted">Результати збережені. Складні слова чекатимуть на повторення.</p><button class="primary" id="back">До моїх уроків →</button></div>`);$('#back').onclick=()=>{page='home';render()}}
+
+function ensureVerbs(){
+  if(!Array.isArray(state.verbs))state.verbs=[];
+  if(!state.verbProgress||typeof state.verbProgress!=='object')state.verbProgress={};
+}
+
+let verbMode='translate',verbLevel='A1',verbCard=null,verbRevealed=false,verbDraft='',verbGuess='',verbNotice='';
+
+function eligibleVerbs(){
+  ensureVerbs();
+  return state.verbs.filter(v=>(v.level||"A1")===verbLevel&&(verbMode==="translate"||(verbMode==="present"?Boolean(v.present?.trim()):Boolean(v.perfekt?.trim()))));
+}
+
+function nextVerb(previous=null){
+  const pool=eligibleVerbs();
+  const choices=pool.length>1?pool.filter(v=>v.id!==previous):pool;
+  choices.sort((a,b)=>{
+    const pa=state.verbProgress[a.id+":"+verbMode]||{},pb=state.verbProgress[b.id+":"+verbMode]||{};
+    const as=(pa.attempts||0)+(pa.mastered?2:0)-(isDifficult(pa)?0.4:0);
+    const bs=(pb.attempts||0)+(pb.mastered?2:0)-(isDifficult(pb)?0.4:0);
+    return as-bs;
+  });
+  return choices[0]?.id||null;
+}
+
+function renderVerbs(){
+  ensureVerbs();
+  const pool=eligibleVerbs();
+  if(!pool.some(v=>v.id===verbCard))verbCard=nextVerb();
+  const v=state.verbs.find(x=>x.id===verbCard);
+  const modeLabel={translate:"Переклад",present:"Präsens · er/sie/es",perfekt:"Perfekt"}[verbMode];
+  const challenge=v?(verbMode==="translate"?v.uk:v.infinitive):"";
+  const result=v?(verbMode==="translate"?v.infinitive:verbMode==="present"?"er/sie/es "+v.present:v.perfekt):"";
+  const lvl=verbLevel;
+  shell(`<div class="heading"><div><p class="eyebrow">ТРЕНАЖЕР ПАМ’ЯТІ</p><h1>Дієслова · Verben</h1><p class="muted">Згадуй переклад і граматичні форми окремо. Правильна відповідь прихована до перевірки.</p></div></div>
+<div class="panel">
+  <label for="verb-level">Рівень</label>
+  <select id="verb-level"><option value="A1" ${lvl==="A1"?"selected":""}>A1</option><option value="A2" ${lvl==="A2"?"selected":""}>A2</option></select>
+  <p class="muted">${state.verbs.filter(v=>(v.level||"A1")===lvl).length} дієслів у розділі ${esc(lvl)}</p>
+  <div class="actions" style="flex-wrap:wrap">
+    ${[["translate","Переклад"],["present","Präsens"],["perfekt","Perfekt"]].map(([key,label])=>`<button type="button" class="${key===verbMode?"primary":"secondary"}" data-verb-mode="${key}">${label}</button>`).join("")}
+  </div>
+  ${v?`<div class="game" style="margin-top:16px">
+    <span class="pill">${modeLabel}</span><h2>${esc(challenge)}</h2>
+    <p class="muted">${verbMode==="translate"?"Згадай початкову форму німецькою.":verbMode==="present"?"Згадай форму для er/sie/es.":"Згадай форму Perfekt з haben або sein."}</p>
+    ${verbRevealed?`<div class="feedback success"><p>Правильна відповідь</p><strong>${esc(result)}</strong><p>${esc(v.uk)}</p>${verbGuess?`<p>Твоя спроба: ${esc(verbGuess)}</p>`:""}</div>
+      <div class="actions"><button id="verb-yes" class="primary">Я згадала ✓</button><button id="verb-no" class="secondary">Не згадала</button></div>`:
+      `<label for="verb-guess">Спробуй згадати (можна усно)</label><input id="verb-guess" value="${esc(verbGuess)}" autocomplete="off" placeholder="Моя відповідь — необов’язково">
+      <button id="verb-reveal" class="primary">Показати відповідь</button>`}
+  </div>`:`<p class="hint">${state.verbs.length===0?"Спочатку додай дієслова нижче.":"Для цього рівня або режиму ще немає дієслів з потрібними формами."}</p>`}
+</div>
+<div class="panel">
+  <h2>Додати дієслова · ${esc(lvl)}</h2>
+  <p class="hint">Один рядок: інфінітив — переклад — форма er/sie/es — Perfekt. Останні дві форми необов’язкові: такі слова братимуть участь лише в тренуванні перекладу.</p>
+  <textarea id="verb-raw" rows="6" placeholder="anfangen — починати — fängt an — hat angefangen&#10;helfen — допомагати — hilft — hat geholfen">${esc(verbDraft)}</textarea>
+  <button id="verb-add" class="secondary">Зберегти дієслова</button>
+  ${verbNotice?`<p role="status">${esc(verbNotice)}</p>`:""}
+</div>`);
+  $("#verb-level").onchange=e=>{verbLevel=e.target.value;verbCard=null;verbRevealed=false;verbGuess="";verbNotice="";renderVerbs()};
+  document.querySelectorAll("[data-verb-mode]").forEach(b=>b.onclick=()=>{verbMode=b.dataset.verbMode;verbCard=null;verbRevealed=false;verbGuess="";renderVerbs()});
+  if(v){
+    if(!verbRevealed){
+      $("#verb-guess").oninput=e=>verbGuess=e.target.value;
+      $("#verb-reveal").onclick=()=>{verbGuess=$("#verb-guess").value.trim();verbRevealed=true;renderVerbs()};
+    }else{
+      for(const [id,ok] of [["verb-yes",true],["verb-no",false]]){
+        $("#"+id).onclick=()=>{
+          const key=v.id+":"+verbMode;
+          state.verbProgress[key]=updateProgress(state.verbProgress[key],ok);
+          verbCard=nextVerb(v.id);verbRevealed=false;verbGuess="";
+          save();renderVerbs();
+        };
+      }
+    }
+  }
+  $("#verb-raw").oninput=e=>verbDraft=e.target.value;
+  $("#verb-add").onclick=()=>{
+    const rows=verbDraft.split(/\r?\n/).map(l=>l.split(/\s*[—–]\s*/).map(x=>x.trim())).filter(p=>p.length>=2&&p[0]&&p[1]);
+    if(!rows.length)return alert("Додай хоча б один рядок: дієслово — переклад — er/sie/es — Perfekt.");
+    let added=0,skipped=0;
+    for(const p of rows){
+      const found=state.verbs.some(x=>x.infinitive.toLocaleLowerCase("de")===p[0].toLocaleLowerCase("de")&&(x.level||"A1")===lvl);
+      if(found){skipped++;continue;}
+      state.verbs.push({id:uid(),level:lvl,infinitive:p[0],uk:p[1],present:p[2]||"",perfekt:p[3]||"",updated:Date.now()});added++;
+    }
+    verbNotice=`Додано: ${added}. Уже були у списку: ${skipped}.`;
+    verbDraft="";verbCard=null;save();renderVerbs();
+  };
+}
+
 function row(w,i){return `<div class="edit-row" data-row="${i}"><input data-field="de" value="${esc(w.de)}" placeholder="Німецьке слово" aria-label="Німецьке слово"><select data-field="article" aria-label="Артикль">${['','der','die','das'].map(a=>`<option ${a===w.article?'selected':''} value="${a}">${a||'Без артикля'}</option>`).join('')}</select><input data-field="uk" value="${esc(w.uk)}" placeholder="Переклад українською" aria-label="Переклад українською"><button type="button" data-remove="${i}" aria-label="Прибрати слово">×</button><details><summary>Приклад і пояснення (необов’язково)</summary>${[['example','Речення німецькою'],['translation','Переклад речення'],['parts','Частини слова — лише перевірений розклад'],['explanation','Пояснення значення або частин']].map(([f,p])=>`<input data-field="${f}" value="${esc(w[f])}" placeholder="${p}" aria-label="${p}">`).join('')}</details></div>`}
 function collect(){document.querySelectorAll('[data-row]').forEach(el=>el.querySelectorAll('[data-field]').forEach(i=>draft[Number(el.dataset.row)][i.dataset.field]=i.value))}
 let lessonName='',rawText='',ocrBusy=false;
