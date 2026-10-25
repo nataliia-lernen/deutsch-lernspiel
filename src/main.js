@@ -30,7 +30,7 @@ function ensureVerbs(){
   if(!state.verbProgress||typeof state.verbProgress!=='object')state.verbProgress={};
 }
 
-let verbMode='translate',verbLevel='A1',verbCard=null,verbRevealed=false,verbDraft='',verbGuess='',verbNotice='';
+let verbMode='translate',verbLevel='A1',verbCard=null,verbRevealed=false,verbDraft='',verbGuess='',verbNotice='',verbChecked=null;
 
 function eligibleVerbs(){
   ensureVerbs();
@@ -56,7 +56,7 @@ function renderVerbs(){
   const v=state.verbs.find(x=>x.id===verbCard);
   const modeLabel={translate:"Переклад",present:"Präsens · er/sie/es",perfekt:"Perfekt"}[verbMode];
   const challenge=v?(verbMode==="translate"?v.uk:v.infinitive):"";
-  const result=v?(verbMode==="translate"?v.infinitive:verbMode==="present"?"er/sie/es "+v.present:v.perfekt):"";
+  const result=v?(verbMode==="translate"?v.infinitive:verbMode==="present"?v.present:v.perfekt):"";
   const lvl=verbLevel;
   shell(`<div class="heading"><div><p class="eyebrow">ТРЕНАЖЕР ПАМ’ЯТІ</p><h1>Дієслова · Verben</h1><p class="muted">Згадуй переклад і граматичні форми окремо. Правильна відповідь прихована до перевірки.</p></div></div>
 <div class="panel">
@@ -69,10 +69,10 @@ function renderVerbs(){
   ${v?`<div class="game" style="margin-top:16px">
     <span class="pill">${modeLabel}</span><h2>${esc(challenge)}</h2>
     <p class="muted">${verbMode==="translate"?"Згадай початкову форму німецькою.":verbMode==="present"?"Згадай форму для er/sie/es.":"Згадай форму Perfekt з haben або sein."}</p>
-    ${verbRevealed?`<div class="feedback success"><p>Правильна відповідь</p><strong>${esc(result)}</strong><p>${esc(v.uk)}</p>${verbGuess?`<p>Твоя спроба: ${esc(verbGuess)}</p>`:""}</div>
-      <div class="actions"><button id="verb-yes" class="primary">Я згадала ✓</button><button id="verb-no" class="secondary">Не згадала</button></div>`:
-      `<label for="verb-guess">Спробуй згадати (можна усно)</label><input id="verb-guess" value="${esc(verbGuess)}" autocomplete="off" placeholder="Моя відповідь — необов’язково">
-      <button id="verb-reveal" class="primary">Показати відповідь</button>`}
+    ${verbRevealed?`<div class="feedback ${verbChecked?"success":"wrong"}"><p>${verbChecked?"Правильно!":"Помилка. Правильна відповідь:"}</p><strong>${esc(result)}</strong><p>${esc(v.uk)}</p>${verbGuess?`<p>Твоя спроба: ${esc(verbGuess)}</p>`:""}</div>
+      <div class="actions"><button id="verb-next" class="primary">Наступне дієслово →</button></div>`:
+      `<label for="verb-guess">Напиши відповідь</label><input id="verb-guess" value="${esc(verbGuess)}" autocomplete="off" placeholder="Введи відповідь" required>
+      <button id="verb-reveal" class="primary">Перевірити</button>`}
   </div>`:`<p class="hint">${state.verbs.length===0?"Спочатку додай дієслова нижче.":"Для цього рівня або режиму ще немає дієслів з потрібними формами."}</p>`}
 </div>
 <div class="panel">
@@ -82,21 +82,23 @@ function renderVerbs(){
   <button id="verb-add" class="secondary">Зберегти дієслова</button>
   ${verbNotice?`<p role="status">${esc(verbNotice)}</p>`:""}
 </div>`);
-  $("#verb-level").onchange=e=>{verbLevel=e.target.value;verbCard=null;verbRevealed=false;verbGuess="";verbNotice="";renderVerbs()};
-  document.querySelectorAll("[data-verb-mode]").forEach(b=>b.onclick=()=>{verbMode=b.dataset.verbMode;verbCard=null;verbRevealed=false;verbGuess="";renderVerbs()});
+  $("#verb-level").onchange=e=>{verbLevel=e.target.value;verbCard=null;verbRevealed=false;verbChecked=null;verbGuess="";verbNotice="";renderVerbs()};
+  document.querySelectorAll("[data-verb-mode]").forEach(b=>b.onclick=()=>{verbMode=b.dataset.verbMode;verbCard=null;verbRevealed=false;verbChecked=null;verbGuess="";renderVerbs()});
   if(v){
     if(!verbRevealed){
       $("#verb-guess").oninput=e=>verbGuess=e.target.value;
-      $("#verb-reveal").onclick=()=>{verbGuess=$("#verb-guess").value.trim();verbRevealed=true;renderVerbs()};
+      $("#verb-reveal").onclick=()=>{
+        verbGuess=$("#verb-guess").value.trim();
+        if(!verbGuess)return alert("Спочатку введи відповідь.");
+        const norm=x=>x.trim().toLocaleLowerCase("de").replace(/\\s+/g," ");
+        const target=verbMode==="translate"?v.infinitive:verbMode==="present"?v.present:v.perfekt;
+        const attempt=verbMode==="present"?verbGuess.replace(/^(er|sie|es)\\s+/i,""):verbGuess;
+        verbChecked=norm(attempt)===norm(target);
+        state.verbProgress[v.id+":"+verbMode]=updateProgress(state.verbProgress[v.id+":"+verbMode],verbChecked);
+        save();verbRevealed=true;renderVerbs();
+      };
     }else{
-      for(const [id,ok] of [["verb-yes",true],["verb-no",false]]){
-        $("#"+id).onclick=()=>{
-          const key=v.id+":"+verbMode;
-          state.verbProgress[key]=updateProgress(state.verbProgress[key],ok);
-          verbCard=nextVerb(v.id);verbRevealed=false;verbGuess="";
-          save();renderVerbs();
-        };
-      }
+      $("#verb-next").onclick=()=>{verbCard=nextVerb(v.id);verbRevealed=false;verbChecked=null;verbGuess="";renderVerbs()};
     }
   }
   $("#verb-raw").oninput=e=>verbDraft=e.target.value;
