@@ -45,9 +45,39 @@ const initialVerbBatch=[
   ["schicken","надсилати","schickt","hat geschickt","Dativ + Akkusativ"],
   ["wünschen","бажати","wünscht","hat gewünscht","Dativ + Akkusativ"]
 ];
+const secondVerbBatch=[
+["abholen","забирати","holt ab","hat abgeholt","Akkusativ"],
+["anklicken","натискати мишкою","klickt an","hat angeklickt","Akkusativ"],
+["anmelden","реєструвати","meldet an","hat angemeldet","Akkusativ"],
+["anrufen","телефонувати комусь","ruft an","hat angerufen","Akkusativ"],
+["ansehen","дивитися на","sieht an","hat angesehen","Akkusativ"],
+["ausfüllen","заповнювати","füllt aus","hat ausgefüllt","Akkusativ"],
+["ausmachen","вимикати; домовлятися","macht aus","hat ausgemacht","Akkusativ"],
+["auspacken","розпаковувати","packt aus","hat ausgepackt","Akkusativ"],
+["benutzen","використовувати","benutzt","hat benutzt","Akkusativ"],
+["besichtigen","оглядати","besichtigt","hat besichtigt","Akkusativ"],
+["besuchen","відвідувати","besucht","hat besucht","Akkusativ"],
+["bezahlen","оплачувати","bezahlt","hat bezahlt","Akkusativ"],
+["brauchen","потребувати","braucht","hat gebraucht","Akkusativ"],
+["einladen","запрошувати","lädt ein","hat eingeladen","Akkusativ"],
+["erreichen","досягати; зв'язуватися","erreicht","hat erreicht","Akkusativ"],
+["fragen","запитувати","fragt","hat gefragt","Akkusativ"],
+["kennenlernen","знайомитися з","lernt kennen","hat kennengelernt","Akkusativ"],
+["öffnen","відчиняти","öffnet","hat geöffnet","Akkusativ"],
+["vergessen","забувати","vergisst","hat vergessen","Akkusativ"],
+["verstehen","розуміти","versteht","hat verstanden","Akkusativ"]
+];
 function ensureVerbs(){
   if(!Array.isArray(state.verbs))state.verbs=[];
   if(!state.verbProgress||typeof state.verbProgress!=='object')state.verbProgress={};
+  if(localStorage.getItem("deutsch-verbs-batch-2")!=="done"){
+    for(const [infinitive,uk,present,perfekt,gramCase] of secondVerbBatch){
+      const existing=state.verbs.find(v=>v.infinitive?.trim().toLocaleLowerCase("de")===infinitive&&((v.level||"A1")==="A1"));
+      if(existing){if(!existing.gramCase)existing.gramCase=gramCase;continue;}
+      state.verbs.push({id:"textbook-a1-"+infinitive,level:"A1",infinitive,uk,present,perfekt,gramCase,updated:Date.now()});
+    }
+    try{localStorage.setItem("deutsch-state",JSON.stringify(state));localStorage.setItem("deutsch-verbs-batch-2","done")}catch{}
+  }
   if(localStorage.getItem("deutsch-verbs-batch-1")!=="done"){
     for(const [infinitive,uk,present,perfekt,gramCase] of initialVerbBatch){
       const existing=state.verbs.find(v=>v.infinitive?.trim().toLocaleLowerCase("de")===infinitive&&((v.level||"A1")==="A1"));
