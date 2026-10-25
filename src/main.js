@@ -259,7 +259,7 @@ const caseExercises=[
   ["gehören","Das Buch gehört ___.","ihm","ihn","Dativ","gehören + Dativ: Das Buch gehört ihm. — Книжка належить йому."],
   ["gratulieren","Wir gratulieren ___.","ihr","sie","Dativ","gratulieren + Dativ: Wir gratulieren ihr. — Ми вітаємо її."],
   ["schmecken","Die Suppe schmeckt ___.","uns","wir","Dativ","schmecken + Dativ: Die Suppe schmeckt uns. — Нам смакує суп."],
-  ["anrufen","Ich rufe ___ an.","dich","dir","Akkusativ","anrufen + Akkusativ: Ich rufe dich an. — Я тобі телефоную."],
+  ["anrufen","Ich rufe ___ an.","dich","dir","Akkusativ","anrufen + Akkusativ: Ich rufe dich an. — Я телефоную тобі (німецькою dich — Akkusativ)."],
   ["besuchen","Wir besuchen ___.","ihn","ihm","Akkusativ","besuchen + Akkusativ: Wir besuchen ihn. — Ми його відвідуємо."],
   ["sehen","Ich sehe ___.","sie","ihr","Akkusativ","sehen + Akkusativ: Ich sehe sie. — Я її бачу."],
   ["fragen","Er fragt ___.","mich","mir","Akkusativ","fragen + Akkusativ: Er fragt mich. — Він мене запитує."],
@@ -297,7 +297,7 @@ const prepExercises=[
   ["sich erinnern an + Akkusativ","Er erinnert sich ___ den Urlaub.","an","mit","Er erinnert sich an den Urlaub.","Він згадує відпустку."],
   ["gehören zu + Dativ","Dieses Wort gehört ___ der Lektion.","zu","auf","Dieses Wort gehört zu der Lektion.","Це слово належить до уроку."],
   ["sich vorbereiten auf + Akkusativ","Ich bereite mich ___ die Prüfung vor.","auf","bei","Ich bereite mich auf die Prüfung vor.","Я готуюся до іспиту."],
-  ["sich freuen auf + Akkusativ","Wir freuen uns ___ die Ferien nächste Woche.","auf","über","Wir freuen uns auf die Ferien nächste Woche.","Ми радіємо майбутнім канікулам."],
+  ["sich freuen auf + Akkusativ","Wir freuen uns ___ die Ferien nächste Woche.","auf","über","Wir freuen uns auf die Ferien nächste Woche.","Ми з нетерпінням чекаємо на канікули наступного тижня."],
   ["sich freuen über + Akkusativ","Ich freue mich ___ dein Geschenk.","über","auf","Ich freue mich über dein Geschenk.","Я радію твоєму подарунку."]
 ];
 let prepIndex=0,prepAnswer=null,prepCorrect=0,prepAttempts=0,prepOrder=shuffle(prepExercises.map((_,i)=>i));
