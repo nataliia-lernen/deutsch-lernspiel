@@ -25,32 +25,93 @@ function answer(value){if(!session||session.result)return;const {w,mode}=task(),
 function tick(){if(!session)return;const el=$('#clock');if(session.deadline){const left=Math.max(0,Math.ceil((session.deadline-Date.now())/1000));if(el)el.textContent=`◷ ${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`;if(!left)finish()}else if(el)el.textContent='У своєму темпі'}setInterval(tick,1000);
 function finish(){const s=session;if(!s)return;session=null;shell(`<div class="game"><span class="celebrate">✦</span><p class="eyebrow">ЩЕ ОДИН КРОК УПЕРЕД</p><h1>Гарна робота!</h1><p>Відповідей: ${s.answered} · Правильних: ${s.score/10}</p><h2>${s.score} балів</h2><p class="muted">Результати збережені. Складні слова чекатимуть на повторення.</p><button class="primary" id="back">До моїх уроків →</button></div>`);$('#back').onclick=()=>{page='home';render()}}
 
-function ensureVerbs(){if(!Array.isArray(state.verbs))state.verbs=[];if(!state.verbProgress||typeof state.verbProgress!=='object')state.verbProgress={}}
-let verbMode='translate',verbCard=null,verbRevealed=false,verbDraft='';
+function ensureVerbs(){
+  if(!Array.isArray(state.verbs))state.verbs=[];
+  if(!state.verbProgress||typeof state.verbProgress!=='object')state.verbProgress={};
+}
+
+let verbMode='translate',verbLevel='A1',verbCard=null,verbRevealed=false,verbDraft='',verbGuess='',verbNotice='';
+
+function eligibleVerbs(){
+  ensureVerbs();
+  return state.verbs.filter(v=>(v.level||"A1")===verbLevel&&(verbMode==="translate"||(verbMode==="present"?Boolean(v.present?.trim()):Boolean(v.perfekt?.trim()))));
+}
+
+function nextVerb(previous=null){
+  const pool=eligibleVerbs();
+  const choices=pool.length>1?pool.filter(v=>v.id!==previous):pool;
+  choices.sort((a,b)=>{
+    const pa=state.verbProgress[a.id+":"+verbMode]||{},pb=state.verbProgress[b.id+":"+verbMode]||{};
+    const as=(pa.attempts||0)+(pa.mastered?2:0)-(isDifficult(pa)?0.4:0);
+    const bs=(pb.attempts||0)+(pb.mastered?2:0)-(isDifficult(pb)?0.4:0);
+    return as-bs;
+  });
+  return choices[0]?.id||null;
+}
+
 function renderVerbs(){
-ensureVerbs();
-if(!verbCard&&state.verbs.length)verbCard=state.verbs[0].id;
-const v=verbCard&&state.verbs.find(x=>x.id===verbCard);
-const modeLabel=verbMode==='translate'?'Згадай німецький переклад':'Згадай форми';
-const face=v?(verbMode==='translate'?v.uk:v.infinitive):'';
-const back=v?(verbMode==='translate'?v.infinitive:(v.present?'er/sie/es '+v.present:'—')+' · '+(v.perfekt||'—')):'';
-shell(`<div class="heading"><div><p class="eyebrow">ПОВТОРЕННЯ З ПАМ’ЯТІ</p><h1>Дієслова A1–A2</h1><p class="muted">Побачиш відповідь лише після власної спроби. Тут окремий прогрес для форм і перекладу.</p></div></div>
+  ensureVerbs();
+  const pool=eligibleVerbs();
+  if(!pool.some(v=>v.id===verbCard))verbCard=nextVerb();
+  const v=state.verbs.find(x=>x.id===verbCard);
+  const modeLabel={translate:"Переклад",present:"Präsens · er/sie/es",perfekt:"Perfekt"}[verbMode];
+  const challenge=v?(verbMode==="translate"?v.uk:v.infinitive):"";
+  const result=v?(verbMode==="translate"?v.infinitive:verbMode==="present"?"er/sie/es "+v.present:v.perfekt):"";
+  const lvl=verbLevel;
+  shell(`<div class="heading"><div><p class="eyebrow">ТРЕНАЖЕР ПАМ’ЯТІ</p><h1>Дієслова · Verben</h1><p class="muted">Згадуй переклад і граматичні форми окремо. Правильна відповідь прихована до перевірки.</p></div></div>
 <div class="panel">
-<h2>Тренування · ${state.verbs.length} дієслів</h2>
-<div class="actions"><button class="secondary" id="verb-translate">Переклад</button><button class="secondary" id="verb-forms">Форми</button></div>
-${v?`<div class="game" style="margin-top:16px"><span class="pill">${modeLabel}</span><h2>${esc(face)}</h2><p>${verbMode==='translate'?'Пригадай німецьке слово.':'Пригадай форму er/sie/es у Präsens та Perfekt.'}</p>
-${verbRevealed?`<div class="feedback success"><strong>${esc(back)}</strong><p>${esc(v.uk)}</p></div><div class="actions"><button id="verb-correct" class="primary">Згадала ✓</button><button id="verb-wrong" class="secondary">Не згадала</button></div>`:'<button id="verb-reveal" class="primary">Показати відповідь</button>'}</div>`:'<p class="muted">Додай дієслова, щоб почати.</p>'}
+  <label for="verb-level">Рівень</label>
+  <select id="verb-level"><option value="A1" ${lvl==="A1"?"selected":""}>A1</option><option value="A2" ${lvl==="A2"?"selected":""}>A2</option></select>
+  <p class="muted">${state.verbs.filter(v=>(v.level||"A1")===lvl).length} дієслів у розділі ${esc(lvl)}</p>
+  <div class="actions" style="flex-wrap:wrap">
+    ${[["translate","Переклад"],["present","Präsens"],["perfekt","Perfekt"]].map(([key,label])=>`<button type="button" class="${key===verbMode?"primary":"secondary"}" data-verb-mode="${key}">${label}</button>`).join("")}
+  </div>
+  ${v?`<div class="game" style="margin-top:16px">
+    <span class="pill">${modeLabel}</span><h2>${esc(challenge)}</h2>
+    <p class="muted">${verbMode==="translate"?"Згадай початкову форму німецькою.":verbMode==="present"?"Згадай форму для er/sie/es.":"Згадай форму Perfekt з haben або sein."}</p>
+    ${verbRevealed?`<div class="feedback success"><p>Правильна відповідь</p><strong>${esc(result)}</strong><p>${esc(v.uk)}</p>${verbGuess?`<p>Твоя спроба: ${esc(verbGuess)}</p>`:""}</div>
+      <div class="actions"><button id="verb-yes" class="primary">Я згадала ✓</button><button id="verb-no" class="secondary">Не згадала</button></div>`:
+      `<label for="verb-guess">Спробуй згадати (можна усно)</label><input id="verb-guess" value="${esc(verbGuess)}" autocomplete="off" placeholder="Моя відповідь — необов’язково">
+      <button id="verb-reveal" class="primary">Показати відповідь</button>`}
+  </div>`:`<p class="hint">${state.verbs.length===0?"Спочатку додай дієслова нижче.":"Для цього рівня або режиму ще немає дієслів з потрібними формами."}</p>`}
 </div>
-<div class="panel"><h2>Додати список дієслів</h2><p class="hint">Один рядок: початкова форма — українською — er/sie/es (Präsens) — Perfekt. Для дієслів без форм залишай останні поля порожніми. Усі слова попередніх уроків залишаються незмінними.</p>
-<textarea id="verb-raw" rows="6" placeholder="anfangen — починати — fängt an — hat angefangen&#10;helfen — допомагати — hilft — hat geholfen">${esc(verbDraft)}</textarea>
-<div class="actions"><button id="verb-add" class="secondary">Зберегти дієслова</button></div>
-</div>
-`);
-$('#verb-translate').onclick=()=>{verbMode='translate';verbRevealed=false;renderVerbs()};
-$('#verb-forms').onclick=()=>{verbMode='forms';verbRevealed=false;renderVerbs()};
-if(v){if(!verbRevealed)$('#verb-reveal').onclick=()=>{verbRevealed=true;renderVerbs()};else for(const [id,ok] of [['verb-correct',true],['verb-wrong',false]])$('#'+id).onclick=()=>{const key=v.id+':'+verbMode;state.verbProgress[key]=updateProgress(state.verbProgress[key],ok);save();const choices=state.verbs.filter(x=>x.id!==v.id);choices.sort((a,b)=>Number(!!isDifficult(state.verbProgress[b.id+':'+verbMode]))-Number(!!isDifficult(state.verbProgress[a.id+':'+verbMode])));verbCard=(choices[0]||v).id;verbRevealed=false;renderVerbs()}}
-$('#verb-raw').oninput=e=>verbDraft=e.target.value;
-$('#verb-add').onclick=()=>{const rows=verbDraft.split(/\r?\n/).map(l=>l.split(/\s*[—–]\s*/).map(x=>x.trim())).filter(parts=>parts.length>=2&&parts[0]&&parts[1]);if(!rows.length)return alert('Введи хоча б одне дієслово у форматі: німецькою — українською — форма — Perfekt.');const now=Date.now();for(const p of rows){const inf=p[0].toLocaleLowerCase('de');const existing=state.verbs.find(x=>x.infinitive.toLocaleLowerCase('de')===inf);if(existing)continue;state.verbs.push({id:uid(),infinitive:p[0],uk:p[1],present:p[2]||'',perfekt:p[3]||'',updated:now})}if(!verbCard&&state.verbs.length)verbCard=state.verbs[0].id;verbDraft='';save();renderVerbs()}
+<div class="panel">
+  <h2>Додати дієслова · ${esc(lvl)}</h2>
+  <p class="hint">Один рядок: інфінітив — переклад — форма er/sie/es — Perfekt. Останні дві форми необов’язкові: такі слова братимуть участь лише в тренуванні перекладу.</p>
+  <textarea id="verb-raw" rows="6" placeholder="anfangen — починати — fängt an — hat angefangen&#10;helfen — допомагати — hilft — hat geholfen">${esc(verbDraft)}</textarea>
+  <button id="verb-add" class="secondary">Зберегти дієслова</button>
+  ${verbNotice?`<p role="status">${esc(verbNotice)}</p>`:""}
+</div>`);
+  $("#verb-level").onchange=e=>{verbLevel=e.target.value;verbCard=null;verbRevealed=false;verbGuess="";verbNotice="";renderVerbs()};
+  document.querySelectorAll("[data-verb-mode]").forEach(b=>b.onclick=()=>{verbMode=b.dataset.verbMode;verbCard=null;verbRevealed=false;verbGuess="";renderVerbs()});
+  if(v){
+    if(!verbRevealed){
+      $("#verb-guess").oninput=e=>verbGuess=e.target.value;
+      $("#verb-reveal").onclick=()=>{verbGuess=$("#verb-guess").value.trim();verbRevealed=true;renderVerbs()};
+    }else{
+      for(const [id,ok] of [["verb-yes",true],["verb-no",false]]){
+        $("#"+id).onclick=()=>{
+          const key=v.id+":"+verbMode;
+          state.verbProgress[key]=updateProgress(state.verbProgress[key],ok);
+          verbCard=nextVerb(v.id);verbRevealed=false;verbGuess="";
+          save();renderVerbs();
+        };
+      }
+    }
+  }
+  $("#verb-raw").oninput=e=>verbDraft=e.target.value;
+  $("#verb-add").onclick=()=>{
+    const rows=verbDraft.split(/\r?\n/).map(l=>l.split(/\s*[—–]\s*/).map(x=>x.trim())).filter(p=>p.length>=2&&p[0]&&p[1]);
+    if(!rows.length)return alert("Додай хоча б один рядок: дієслово — переклад — er/sie/es — Perfekt.");
+    let added=0,skipped=0;
+    for(const p of rows){
+      const found=state.verbs.some(x=>x.infinitive.toLocaleLowerCase("de")===p[0].toLocaleLowerCase("de")&&(x.level||"A1")===lvl);
+      if(found){skipped++;continue;}
+      state.verbs.push({id:uid(),level:lvl,infinitive:p[0],uk:p[1],present:p[2]||"",perfekt:p[3]||"",updated:Date.now()});added++;
+    }
+    verbNotice=`Додано: ${added}. Уже були у списку: ${skipped}.`;
+    verbDraft="";verbCard=null;save();renderVerbs();
+  };
 }
 
 function row(w,i){return `<div class="edit-row" data-row="${i}"><input data-field="de" value="${esc(w.de)}" placeholder="Німецьке слово" aria-label="Німецьке слово"><select data-field="article" aria-label="Артикль">${['','der','die','das'].map(a=>`<option ${a===w.article?'selected':''} value="${a}">${a||'Без артикля'}</option>`).join('')}</select><input data-field="uk" value="${esc(w.uk)}" placeholder="Переклад українською" aria-label="Переклад українською"><button type="button" data-remove="${i}" aria-label="Прибрати слово">×</button><details><summary>Приклад і пояснення (необов’язково)</summary>${[['example','Речення німецькою'],['translation','Переклад речення'],['parts','Частини слова — лише перевірений розклад'],['explanation','Пояснення значення або частин']].map(([f,p])=>`<input data-field="${f}" value="${esc(w[f])}" placeholder="${p}" aria-label="${p}">`).join('')}</details></div>`}
