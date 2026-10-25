@@ -212,9 +212,9 @@ function renderVerbs(){
       $("#verb-reveal").onclick=()=>{
         verbGuess=$("#verb-guess").value.trim();
         if(!verbGuess)return alert("Спочатку введи відповідь.");
-        const norm=x=>x.trim().toLocaleLowerCase("de").replace(/\\s+/g," ");
+        const norm=x=>x.trim().toLocaleLowerCase("de").replace(/\s+/g," ");
         const target=verbMode==="translate"?v.infinitive:verbMode==="present"?v.present:v.perfekt;
-        const attempt=verbMode==="present"?verbGuess.replace(/^(er|sie|es)\\s+/i,""):verbGuess;
+        const attempt=verbMode==="present"?verbGuess.replace(/^(er|sie|es)\s+/i,""):verbGuess;
         const alternatives=variants[v.infinitive?.trim().toLocaleLowerCase("de")]?.[verbMode]||[];
         verbChecked=[target,...alternatives].some(answer=>norm(attempt)===norm(answer));
         state.verbProgress[v.id+":"+verbMode]=updateProgress(state.verbProgress[v.id+":"+verbMode],verbChecked);
