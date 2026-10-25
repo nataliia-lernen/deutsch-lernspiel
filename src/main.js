@@ -56,15 +56,17 @@ function renderVerbs(){
   const v=state.verbs.find(x=>x.id===verbCard);
   const modeLabel={translate:"Переклад",present:"Präsens · er/sie/es",perfekt:"Perfekt"}[verbMode];
   const challenge=v?(verbMode==="translate"?v.uk:v.infinitive):"";
-  // Repair earlier imported sample verbs whose stored forms were accidentally omitted or shifted.
-  // Preserve all user-added verbs and vocabulary; only correct known sample entries.
+  // Normalize only the two original sample entries; imported text may have mixed both forms.
+  let repaired=false;
   for(const verb of state.verbs){
     const name=(verb.infinitive||"").trim().toLocaleLowerCase("de");
     const known=name==="anfangen"?{present:"fängt an",perfekt:"hat angefangen"}:name==="helfen"?{present:"hilft",perfekt:"hat geholfen"}:null;
     if(!known)continue;
-    if(!verb.present||verb.present.trim().toLocaleLowerCase("de")===name)verb.present=known.present;
-    if(!verb.perfekt||verb.perfekt.trim().toLocaleLowerCase("de")===name)verb.perfekt=known.perfekt;
+    if(verb.present!==known.present||verb.perfekt!==known.perfekt){
+      verb.present=known.present;verb.perfekt=known.perfekt;repaired=true;
+    }
   }
+  if(repaired)try{localStorage.setItem("deutsch-state",JSON.stringify(state))}catch{}
   const result=v?(verbMode==="translate"?v.infinitive:verbMode==="present"?v.present:v.perfekt):"";
   const lvl=verbLevel;
   shell(`<div class="heading"><div><p class="eyebrow">ТРЕНАЖЕР ПАМ’ЯТІ</p><h1>Дієслова · Verben</h1><p class="muted">Згадуй переклад і граматичні форми окремо. Правильна відповідь прихована до перевірки.</p></div></div>
